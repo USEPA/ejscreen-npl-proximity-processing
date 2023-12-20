@@ -21,7 +21,7 @@ The source data is from the Superfund Enterprise Management System (SEMS) Public
 - Rather than doing 52 separate state runs, combine the states into 5 state groupings.
 - Run Step 1 for each of 5 state groups to generate weighted distances facility-block pairs. See **NPL\_US01\_proximity\_Step1.txt** for Pig script example.
 - Run Step 2 for each of 5 state groups to generate block group summary for each subgroup. See **NPL\_US01\_proximity\_Step2.txt** for Pig script example.
-- Use Athena to create BG-level results tables and export, for example, BG\_Scores\_01.csv to OutputfromHadoop folder.
+- Use Athena to create BG-level results tables and download as csv files, for example, BG\_Scores\_01.csv to OutputfromHadoop folder.
 - Repeat all steps for each state group.
 
 **Post-Hadoop Processing:**
