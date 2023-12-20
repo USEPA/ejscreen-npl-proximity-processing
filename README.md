@@ -30,7 +30,7 @@ The source data is from the Superfund Enterprise Management System (SEMS) Public
 - Prep with text editor (Capitalized first header row and remove all other header rows).
 - Convert US csv file to xlsx; make sure BLKGRP is text
 - Port US xlsx file into geodatabase table (NPL\_Work.gdb/NPL\_BG\_Scores\_US)
-- Rename columns to STCNTRBG and BG\_SCORENPL\_BG\_Scores\_Final
+- Rename columns to STCNTRBG and BG\_SCORE -- NPL\_BG\_Scores\_Final
 - Provide datasets for testing -- Create NPLProximity\_Testing.gdb
 - Include US\_BG\_Scores\_Final, and NPL\_020823\_forEJ
 - Add US\_NPLProx\_BG with BG shapes and BG\_SCORE, set NULL Scores to 0.
