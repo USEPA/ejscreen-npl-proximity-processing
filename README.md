@@ -8,11 +8,11 @@ The source data is from the Superfund Enterprise Management System (SEMS) Public
 
 **Pre-Hadoop Processing:**
 
-- Copy and paste data portions into new spreadsheet -- NPL\_work\_020823.xlsx
-- Import spreadsheet to table in geodatabase (NPL\_Work.gdb -- NPL\_020823.
-- In order to provide Latitude and Longitude data, download the current Envirofacts export from ([https://edap-oms-data-commons.s3.amazonaws.com/EF/GIS/EF\_NPL.csv](https://edap-oms-data-commons.s3.amazonaws.com/EF/GIS/EF_NPL.csv)) -- EF\_NPL\_011323.csv. Import to feature class in geodatabase -- EF\_NPL\_011323.
-- Join NPL\_020823\_work and EP\_NPL\_011323 to include Latitude and Longitude to create new feature class -- NPL\_020823\_All.
-- Drop records outside US and PR -- NPL\_020823\_forHadoop.
+- Merge final and proposed NPL together.
+- Import spreadsheet to table (NPL\_020823 in geodatabase NPL\_Work.gdb).
+- Download the NPL data from EPA Envirofacts.
+- Join the two sets of NPL data based on EPA ID to obtain latitude and longitude coordinates for each NPL site. Note that the EPA ID used is the Program System ID (PGM\_SYS\_ID in the Envirofacts table).
+- Drop records outside US and PR to create table NPL\_020823\_forHadoop.
 - Export table to NPL\_020823\_forHadoop.csv with these columns: EPA\_ID, LATITUDE, LONGITUDE, CWEIGHT; note that CWEIGHT = 1 for all records.
 
 **AWS Hadoop Processing:**
@@ -26,13 +26,13 @@ The source data is from the Superfund Enterprise Management System (SEMS) Public
 
 **Post-Hadoop Processing:**
 
-- Combine all BG score files text files in OutputfromHadoop folder. Copy bg\_scores\_\*.csv – NPL\_BG\_Scores\_US.csv
-- Prep with text editor (Capitalized first header row and remove all other header rows).
-- Convert US csv file to xlsx; make sure BLKGRP is text
-- Port US xlsx file into geodatabase table (NPL\_Work.gdb/NPL\_BG\_Scores\_US)
-- Rename columns to STCNTRBG and BG\_SCORE -- NPL\_BG\_Scores\_Final
-- Provide datasets for testing -- Create NPLProximity\_Testing.gdb
-- Include US\_BG\_Scores\_Final, and NPL\_020823\_forEJ
+- Combine all BG score text files in OutputfromHadoop folder into one file (NPL\_BG\_Scores\_US.csv).
+- Prep with text editor (Capitalize first header row and remove all other header rows).
+- Import US csv file to Excel; make sure BLKGRP is text.
+- Port US Excel file into geodatabase table (NPL\_Work.gdb/NPL\_BG\_Scores\_US).
+- Rename columns to STCNTRBG and BG\_SCORE, and name table NPL\_BG\_Scores\_Final.
+- Provide datasets for testing. First create NPLProximity\_Testing.gdb.
+- Include US\_BG\_Scores\_Final, and NPL\_020823\_forEJ tables.
 - Add US\_NPLProx\_BG with BG shapes and BG\_SCORE, set NULL Scores to 0.
 
 **EPA Disclaimer**
