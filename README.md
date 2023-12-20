@@ -1,6 +1,6 @@
 # **Generating EJScreen NPL Facility Proximity**
 
-EJScreen uses Apache Hadoop pig scripts to generate Superfund National Priority List (NPL) facility proximity. The Pig scripts were developed using Esri's [GIS Toolkit for Hadoop](https://esri.github.io/gis-tools-for-hadoop/) toolkit. It was run in an AWS EMR cluster environment. The source data came from EPA's Office of Enforcement and Compliance Assurance (OECA). The proximity process involves Pre-Hadoop processing, running Hadoop Pig scripts, and Post-Hadoop processing. The end results are Census block-group based proximity scores.
+EJScreen uses Apache Hadoop Pig scripts to generate Superfund National Priority List (NPL) facility proximity. The Pig scripts were developed using Esri's [GIS Toolkit for Hadoop](https://esri.github.io/gis-tools-for-hadoop/) toolkit. It was run in an AWS EMR cluster environment. The source data came from EPA's Office of Land and Emergency Management (OLEM). The proximity process involves Pre-Hadoop processing, running Hadoop Pig scripts, and Post-Hadoop processing. The end results are Census block-group based proximity scores.
 
 **Source:**
 
@@ -8,10 +8,10 @@ The source data is from the Superfund Enterprise Management System (SEMS) Public
 
 **Pre-Hadoop Processing:**
 
-- Copy and paste data portions into new spreadsheetNPL\_work\_020823.xlsx
+- Copy and paste data portions into new spreadsheet -- NPL\_work\_020823.xlsx
 - Import spreadsheet to table in geodatabase (NPL\_Work.gdb -- NPL\_020823.
-- Get current Envirofacts export from ([https://edap-oms-data-commons.s3.amazonaws.com/EF/GIS/EF\_NPL.csv](https://edap-oms-data-commons.s3.amazonaws.com/EF/GIS/EF_NPL.csv)) -- EF\_NPL\_011323.csv. Import to feature class in geodatabase -- EF\_NPL\_011323.
-- Join to npl\_020823\_work with Latitude, Longitude and Facility\_URL to create feature class -- NPL\_020823\_All.
+- In order to provide Latitude and Longitude data, download the current Envirofacts export from ([https://edap-oms-data-commons.s3.amazonaws.com/EF/GIS/EF\_NPL.csv](https://edap-oms-data-commons.s3.amazonaws.com/EF/GIS/EF_NPL.csv)) -- EF\_NPL\_011323.csv. Import to feature class in geodatabase -- EF\_NPL\_011323.
+- Join NPL\_020823\_work and EP\_NPL\_011323 to include Latitude and Longitude to create new feature class -- NPL\_020823\_All.
 - Drop records outside US and PR -- NPL\_020823\_forHadoop.
 - Export table to NPL\_020823\_forHadoop.csv with these columns: EPA\_ID, LATITUDE, LONGITUDE, CWEIGHT; note that CWEIGHT = 1 for all records.
 
