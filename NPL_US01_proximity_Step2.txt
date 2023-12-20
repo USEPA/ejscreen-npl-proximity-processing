@@ -1,0 +1,49 @@
+*-----------------------------------------------------------------------------------------------------------------
+# Name:		NPL_US01_proximity_Step2.txt
+# Purpose:	Example Pig Script to process all block distance pair scores for 1 
+#           state group
+# Author:	OMS Contractor
+# Created:	12/2022
+# Updated:	10/2023
+# Inputs:	for each state group: block pair scores for <= 5000 meter process
+#           for each state group: block pair scores for > 5000 meter process
+# Outputs:	for each state group: block group proximity scores
+-----------------------------------------------------------------------------------------------------------------
+*/
+
+-- Register Pig Storage library
+REGISTER s3://ejscreen2023/lib/piggybank-0.14.0.jar;
+
+-- Segment 01
+
+-- load segments for blocks <= 5000m into A
+A =  LOAD 's3://ejscreen2023/output/NPL/US01_NPL_le_5000m' USING PigStorage(',') 
+      AS (EPA_ID_lt:chararray,lat_lt:double,lng_lt:double,distance_lt:double,block_id_lt:chararray,
+      areatot_lt:double,totpop10_lt:double,popwgt10_lt:double,aland10_lt:double,awater10_lt:double,bg_12_lt:chararray,
+      adj_distance_lt:double,radius_lt:double,score_lt:double,weighted_score_lt:double);
+  
+-- load segments for blocks > 5000m into B
+B =  LOAD 's3://ejscreen2023/output/NPL/US01_NPL_gt_5000m' USING PigStorage(',') 
+      AS (EPA_ID:chararray,lat:double,lng:double,distance:double,block_id:chararray,
+      areatot:double,totpop10:double,popwgt10:double,aland10:double,awater10:double,bg_12:chararray,
+      adj_distance:double,radius:double,score:double,weighted_score:double);
+
+-- combine A and B sets
+X1 = UNION A,B;
+
+-- calculate weighted scores for each distance pair
+X = FOREACH X1 GENERATE *, (score_lt * popwgt10_lt) as blk_pop_score;
+
+-- group by block group
+H = GROUP X BY bg_12_lt PARALLEL 100;
+
+--build output elements
+I = FOREACH H GENERATE group as blk_grp, SUM(X.blk_pop_score) as blk_grp_score, 
+		SUM(X.totpop10_lt) as sum_pop, AVG(X.score_lt) as mean_score, COUNT(X) as blk_count;
+
+--  0 population gets mean score and the rest gets the block group score
+J1 = FOREACH I GENERATE blk_grp, (sum_pop == 0 ? mean_score : blk_grp_score) * 1000, blk_count, sum_pop;
+
+-- write J1 to block group score hive space
+STORE J1 INTO 's3://ejscreen2023/output/NPL/US_NPL01_block_group_scores' using PigStorage(',');
+

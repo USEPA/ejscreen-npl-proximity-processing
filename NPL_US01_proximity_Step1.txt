@@ -1,0 +1,80 @@
+*----------------------------------------------------------------------------------------------------------------------
+# Name:		NPL_US01_proximity_Step1.txt
+# Purpose:	Example Pig Script to process 1 state grouping of NPL proximity scores
+# Author:	OMS Contractor
+# Created:	12/2022
+# Updated:	10/2023
+# Inputs:	NPL point locations
+#           block centroids population weight table
+# Outputs:	block-pair proximity scores in Hive directory
+------------------------------------------------------------------------------------------------------------------------
+*/
+
+-- Register external libraries:
+
+-- Pigeon geometries 
+REGISTER s3://ejscreen2023/lib/pigeon-0.2.1.jar;
+-- Esri geometries
+REGISTER s3://ejscreen2023/lib/esri-geometry-api-2.1.0.jar;
+-- Pig storage
+REGISTER s3://ejscreen2023/lib/piggybank-0.14.0.jar;
+-- custom weighted scores
+REGISTER s3://ejscreen2023/lib/ejscreen-udfs-1.jar;
+--hadoop geometries
+REGISTER s3://ejscreen2023/lib/spatial-sdk-hadoop.jar;
+
+-- Load NPL points into A1
+A1 = LOAD 's3://ejscreen2023/facilities/NPL_020823_forHadoop.csv' USING org.apache.pig.piggybank.storage.CSVExcelStorage(',','NO_MULTILINE','NOCHANGE','SKIP_INPUT_HEADER') AS (EPA_ID:chararray,Latitude:double,Longitude:double,Cweight:double);
+
+-- Load block population weights table into B1 
+B1 = LOAD 's3://ejscreen2023/proximity/EJScreen_BlockWeights_forHadoop_noZeroPops_2KBuf_2KBuf.csv.gz' USING org.apache.pig.piggybank.storage.CSVExcelStorage(',', 'NO_MULTILINE', 'UNIX', 'SKIP_INPUT_HEADER')
+    AS (objectid:chararray, stfips:chararray, id:chararray, totpop10:double, popwgt10:double, lat:double, lng:double, aland10:double, awater10:double, bg_12:chararray, areatot:double, stlist:chararray, stlist:chararray);
+
+-- Filter block population weights by selected states in B2
+B2 = FILTER B1 BY (stfips == '01') OR (stfips == '02') OR (stfips == '04') OR (stfips == '05') OR (stfips == '06') OR (stfips == '08') OR (stfips == '09') OR (stfips == '10') OR (stfips == '11') OR (stfips == '72');
+
+-- create point geometries for blocks and add to B
+B = FOREACH B2 GENERATE *, edu.umn.cs.pigeon.MakePoint(lng,lat) as point;
+
+-- add point geometries for NPL and add to D
+D = FOREACH A1 GENERATE *, edu.umn.cs.pigeon.MakePoint(Longitude,Latitude) as geom_bin;
+
+-- Cross assign  B (block weight with geometries) and D (NPL points with geometries) into C
+C = CROSS B, D PARALLEL 500;
+
+-- generate all distance pairs and add to C1 
+C1 = FOREACH C GENERATE *, edu.umn.cs.pigeon.GeoDesicDistance(edu.umn.cs.pigeon.MakePoint(lng,lat), geom_bin) as distance;
+
+-- filter distance pairs <= 5000 meters into C2
+C2 = FILTER C1 BY ( distance <= 5000 );
+
+-- generate weighted scores using WeightedScoreUDF function and add to E2
+E2 = FOREACH C2 GENERATE EPA_ID, lat, lng, distance, id, areatot, totpop10, popwgt10, aland10, awater10, bg_12, flatten(com.saic.WeightedScoreUDF(aland10,awater10,distance,totpop10,Cweight));
+
+-- store E2 into <= 5000m hive space
+STORE E2 INTO 's3://ejscreen2023/output/NPL/US01_NPL_le_5000m' using PigStorage(',');
+
+-- generate full set of block ids
+J1 = FOREACH C2 GENERATE id as blockid;
+J2 = DISTINCT J1;
+
+-- Filter the <= 5000m distance pairs from the > 5000m set
+F1 = FILTER C1 BY (distance > 5000);
+
+-- generate greater than 5000 m set 
+F2 = JOIN J2 by blockid RIGHT OUTER, F1 by id PARALLEL 500;
+F3 = FILTER F2 BY (blockid is null);
+
+-- generate distance pairs and add to F4
+F4 = FOREACH F3 GENERATE EPA_ID, lat, lng, distance, id, areatot, totpop10, popwgt10, aland10, awater10, bg_12, Cweight;
+
+-- Find the closest facility to > 5000 blocks; sort by distance to get nearest and use WeightedScoreUDF function
+H = GROUP F4 BY id PARALLEL 500;
+I = FOREACH H {
+    sorted = ORDER F4 by distance ASC;
+    lim = LIMIT sorted 1;
+    GENERATE MAX(lim.EPA_ID),MAX(lim.lat),MAX(lim.lng), MAX(lim.distance), MAX(lim.id), MAX(lim.areatot),MAX(lim.totpop10),MAX(lim.popwgt10),MAX(lim.aland10),MAX(lim.awater10),MAX(lim.bg_12), flatten(com.saic.WeightedScoreUDF(MAX(lim.aland10),MAX(lim.awater10),MAX(lim.distance),MAX(lim.totpop10),MAX(lim.Cweight)));
+ };
+
+-- store I into > 5000 m hive space
+STORE I INTO 's3://ejscreen2023/output/NPL/US01_NPL_gt_5000m' using PigStorage(',');
