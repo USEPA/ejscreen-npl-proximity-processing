@@ -12,7 +12,7 @@ The source data is from the Superfund Enterprise Management System (SEMS) Public
 - Import spreadsheet to table (NPL\_020823 in geodatabase NPL\_Work.gdb).
 - Download the NPL data from EPA Envirofacts.
 - Join the two sets of NPL data based on EPA ID to obtain latitude and longitude coordinates for each NPL site. Note that the EPA ID used is the Program System ID (PGM\_SYS\_ID in the Envirofacts table).
-- Drop records outside US and PR to create table NPL\_020823\_forHadoop.
+- Drop records outside the 50 states, DC and PR, to create table NPL\_020823\_forHadoop.
 - Export table to NPL\_020823\_forHadoop.csv with these columns: EPA\_ID, LATITUDE, LONGITUDE, CWEIGHT; note that CWEIGHT = 1 for all records.
 
 **AWS Hadoop Processing:**
@@ -27,7 +27,7 @@ The source data is from the Superfund Enterprise Management System (SEMS) Public
 **Post-Hadoop Processing:**
 
 - Combine all BG score text files in OutputfromHadoop folder into one file (NPL\_BG\_Scores\_US.csv).
-- Prep with text editor (Capitalize first header row and remove all other header rows).
+- Open NPL_BG_Scores.csv in a text editor to capitalize the header and remove all other header rows. 
 - Import US csv file to Excel; make sure BLKGRP is text.
 - Port US Excel file into geodatabase table (NPL\_Work.gdb/NPL\_BG\_Scores\_US).
 - Rename columns to STCNTRBG and BG\_SCORE, and name table NPL\_BG\_Scores\_Final.
