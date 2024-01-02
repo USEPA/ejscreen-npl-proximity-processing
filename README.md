@@ -12,7 +12,7 @@ The source data is from the Superfund Enterprise Management System (SEMS) Public
 - Import spreadsheet to table (NPL\_020823 in geodatabase NPL\_Work.gdb).
 - Download the NPL data from EPA Envirofacts.
 - Join the two sets of NPL data based on EPA ID to obtain latitude and longitude coordinates for each NPL site. Note that the EPA ID used is the Program System ID (PGM\_SYS\_ID in the Envirofacts table).
-- Drop records outside the 50 US states, DC and PR, to create table NPL\_020823\_forHadoop.
+- Keep only the records for the 50 US states, DC and PR, to create table NPL\_020823\_forHadoop.
 - Export table to NPL\_020823\_forHadoop.csv with these columns: EPA\_ID, LATITUDE, LONGITUDE, CWEIGHT; note that CWEIGHT = 1 for all records.
 
 **AWS Hadoop Processing:**
